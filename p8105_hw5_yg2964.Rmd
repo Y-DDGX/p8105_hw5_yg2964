@@ -66,4 +66,94 @@ sim_res |>
   ) +
   scale_y_continuous(labels = scales::percent)
 ```
+The plot clearly illustrates the famous "birthday paradox" showing the probability of shared birthdays as group size increases. The probability grows surprisingly quickly: with just 23 people, there's already a 50% chance of a shared birthday, rising to about 70% with 30 people, and exceeding 85% with 40 people. This counter-intuitive result shows how we typically underestimate the probability of birthday matches in relatively small groups. The simulation, run 10,000 times per group size, presents these findings in a clear way.
+
+### Problem 2
+Function to generate data and perform t-test
+```{r}
+# Create function for t-test
+t_test_sim <- function(mu) {
+  sample_data <- rnorm(30, mean = mu, sd = 5)
+  t.test(sample_data, mu = 0) |>
+    broom::tidy() |>
+    select(estimate, p.value)
+}
+```
+
+Generate data for mu = 0
+```{r}
+results_mu0 <- 
+  tibble(
+    mu = 0,
+    iteration = 1:5000
+  ) |>
+  mutate(
+    test_results = map(mu, t_test_sim)
+  ) |>
+  unnest(test_results)
+```
+
+Generate data for mu = 1 to 6
+```{r}
+results_mu1to6 <- 
+  expand_grid(
+    mu = 1:6,
+    iteration = 1:5000
+  ) |>
+  mutate(
+    test_results = map(mu, t_test_sim)
+  ) |>
+  unnest(test_results)
+```
+
+Combine results
+```{r}
+simulation_results <- bind_rows(results_mu0, results_mu1to6)
+```
+
+
+Plot 1: Power vs True mu
+```{r}
+simulation_results |>
+  group_by(mu) |>
+  summarize(
+    power = mean(p.value < alpha)
+  ) |>
+  ggplot(aes(x = mu, y = power)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Power Analysis",
+    x = "μ",
+    y = "Power"
+  )
+print(simulation_results)
+```
+
+Plot 2: Average Estimates
+```{r}
+simulation_results |>
+  group_by(mu) |>
+  summarize(
+    all_mean = mean(estimate),
+    sig_mean = mean(estimate[p.value < alpha])
+  ) |>
+  ggplot() +
+  geom_line(aes(x = mu, y = all_mean, color = "All")) +
+  geom_line(aes(x = mu, y = sig_mean, color = "Significant")) +
+  geom_abline(linetype = "dashed") +
+  labs(
+    title = "Average Estimates",
+    x = "μ",
+    y = "Estimate",
+    color = "Samples"
+  )
+print(simulation_results)
+```
+
+
+
+
+
+
 
