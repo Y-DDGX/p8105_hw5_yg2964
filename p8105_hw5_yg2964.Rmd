@@ -141,7 +141,6 @@ simulation_results |>
   ggplot() +
   geom_line(aes(x = mu, y = all_mean, color = "All")) +
   geom_line(aes(x = mu, y = sig_mean, color = "Significant")) +
-  geom_abline(linetype = "dashed") +
   labs(
     title = "Average Estimates",
     x = "μ",
