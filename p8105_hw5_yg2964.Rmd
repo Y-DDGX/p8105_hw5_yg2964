@@ -1,0 +1,69 @@
+---
+title: "p8105_hw5_yg2964"
+output: github_document
+date: "2024-11-14"
+---
+
+```{r setup,include=FALSE}
+library(tidyverse)
+library(rvest)
+library(dplyr)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+set.seed(127)
+```
+
+### Problem 1
+Function to simulate birthdays and check for duplicates
+```{r}
+bday_sim = function(n){
+bdays = sample(1:365, size = n, replace=TRUE)
+
+duplicate = length(unique(bdays))<n
+return(duplicate)
+}
+```
+
+Run simulations for group sizes 2 to 50
+```{r}
+sim_res =
+  expand_grid(
+    n = 2:50,
+    iter = 1:10000
+  ) |> 
+  mutate(res = map_lgl(n,bday_sim)) |> 
+  group_by(n) |> 
+  summarize(probability = mean(res))
+```
+
+Create visualization
+```{r}
+sim_res |>
+  ggplot(aes(x = n, y = probability)) +
+  geom_line(size = 1) +    # Removed color specification to use viridis default
+  labs(
+    title = "Probability of Shared Birthdays by Group Size",
+    x = "Number of People in Group",
+    y = "Probability of Shared Birthday",
+    caption = "Based on 10,000 simulations per group size"
+  ) +
+  scale_y_continuous(labels = scales::percent)
+```
+
