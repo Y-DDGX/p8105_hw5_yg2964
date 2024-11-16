@@ -131,6 +131,7 @@ simulation_results |>
 ```
 Comment: Based on the plot, there is a strong positive, non-linear association between effect size (μ) and power. The relationship follows an S-shaped curve, starting at around 0.05 when μ = 0, increasing sharply between μ = 2 and μ = 4, and then leveling off as power approaches 1.0 for larger effect sizes, demonstrating that larger effects are more easily detected up to a certain point.
 
+<br>
 Plot 2: Average Estimates
 ```{r}
 simulation_results |>
@@ -190,7 +191,7 @@ balt_result <- broom::tidy(balt_test) |>
 knitr::kable(balt_result)
 ```
 
-All Cities Homicide Analysis
+All cities homicide analysis
 ```{r}
 # Calculate proportions for all cities
 prop_test_results <- homicide_data2 |> 
@@ -209,7 +210,7 @@ prop_test_results <- homicide_data2 |>
 knitr::kable(prop_test_results)
 ```
 
-Plot of Homicide Proportions by City
+Plot of homicide proportions by city
 ```{r}
 prop_test_results |> 
   mutate(city_state = reorder(city_state, estimate)) |> 
