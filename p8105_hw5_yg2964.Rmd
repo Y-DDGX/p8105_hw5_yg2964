@@ -209,10 +209,10 @@ prop_test_results <- homicide_data2 |>
 knitr::kable(prop_test_results)
 ```
 
-Plot of Homicide Proportions by City'
+Plot of Homicide Proportions by City
 ```{r}
-prop_test_results %>% 
-  mutate(city_state = reorder(city_state, estimate)) %>% 
+prop_test_results |> 
+  mutate(city_state = reorder(city_state, estimate)) |> 
   ggplot(aes(x = city_state, y = estimate)) +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
