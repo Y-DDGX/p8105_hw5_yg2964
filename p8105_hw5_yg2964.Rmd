@@ -3,15 +3,16 @@ title: "p8105_hw5_yg2964"
 output: github_document
 date: "2024-11-14"
 ---
-
 ```{r setup,include=FALSE}
 library(tidyverse)
 library(rvest)
 library(dplyr)
+library(broom)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
+	message = FALSE,
 	fig.width = 8, 
   fig.height = 6,
   out.width = "90%"
@@ -112,7 +113,6 @@ Combine results
 simulation_results <- bind_rows(results_mu0, results_mu1to6)
 ```
 
-
 Plot 1: Power vs True mu
 ```{r}
 simulation_results |>
@@ -128,7 +128,6 @@ simulation_results |>
     x = "μ",
     y = "Power"
   )
-
 ```
 Comment: Based on the plot, there is a strong positive, non-linear association between effect size (μ) and power. The relationship follows an S-shaped curve, starting at around 0.05 when μ = 0, increasing sharply between μ = 2 and μ = 4, and then leveling off as power approaches 1.0 for larger effect sizes, demonstrating that larger effects are more easily detected up to a certain point.
 
@@ -152,8 +151,76 @@ simulation_results |>
 ```
 Comment: No, the sample average of μ̂ across tests where the null is rejected (yellow line) is not approximately equal to the true value of μ, particularly for smaller true values of μ. This is due to selection bias: when we only look at tests that rejected the null hypothesis, we are systematically selecting samples that showed larger effects than average, leading to overestimation of the true effect size, especially when μ is small.
 
+### Problem 3
+Read data directly from GitHub raw URL
+```{r}
+homicide_data <- read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv") 
+homicide_data2 <- homicide_data|> 
+  mutate(city_state = str_c(city, state, sep = ", "))
+```
 
+Create city summary 
+```{r}
+city_summary <- homicide_data2 |> 
+  group_by(city_state) |> 
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
+```
+The raw data contains `r ncol(homicide_data)` variables, which are uid, reported_date, victim_last, victim_first, victim_race, victim_age, victim_sex, city, state, lat, lon, and disposition, with `r nrow(homicide_data)` observations. Each case has a unique identifier and includes victim characteristics (first and last name, age, sex, and race), location information (city, state, latitude, and longitude), report date, and case disposition status. For the analysis of homicide cases across cities, a new variable city_state was created by combining city and state names (e.g., "Baltimore, MD"). The disposition variable, which indicates whether the case was "Closed by arrest", "Closed without arrest", or "Open/No arrest", will be used to determine which cases remain unsolved.
 
+Baltimore analysis
+```{r}
+baltimore_sum <- homicide_data2 |>  
+  filter(city_state == "Baltimore, MD") |>  
+  summarize(
+    total = n(),
+    unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
 
+balt_test <- prop.test(
+  x = baltimore_sum$unsolved, 
+  n = baltimore_sum$total
+)
 
+balt_result <- broom::tidy(balt_test) |> 
+  select(estimate, conf.low, conf.high)
 
+knitr::kable(balt_result)
+```
+
+All Cities Homicide Analysis
+```{r}
+# Calculate proportions for all cities
+prop_test_results <- homicide_data2 |> 
+  group_by(city_state) |> 
+  summarize(
+    n = n(),
+    n_unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  ) |> 
+  mutate(
+    prop_tests = map2(n_unsolved, n, ~prop.test(.x, .y)),
+    tidy_tests = map(prop_tests, broom::tidy)
+  ) |> 
+  unnest(tidy_tests) |> 
+  select(city_state, estimate, conf.low, conf.high)
+
+knitr::kable(prop_test_results)
+```
+
+Plot of Homicide Proportions by City'
+```{r}
+prop_test_results %>% 
+  mutate(city_state = reorder(city_state, estimate)) %>% 
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  coord_flip() +
+  labs(
+    title = "Proportion of Unsolved Homicides by City",
+    x = "City",
+    y = "Proportion of Unsolved Homicides",
+    caption = "95% confidence intervals shown"
+  )
+```
