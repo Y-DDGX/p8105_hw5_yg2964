@@ -71,6 +71,7 @@ The plot clearly illustrates the famous "birthday paradox" showing the probabili
 ### Problem 2
 Function to generate data and perform t-test
 ```{r}
+alpha <- 0.05
 # Create function for t-test
 t_test_sim <- function(mu) {
   sample_data <- rnorm(30, mean = mu, sd = 5)
@@ -127,8 +128,9 @@ simulation_results |>
     x = "μ",
     y = "Power"
   )
-print(simulation_results)
+
 ```
+Comment: Based on the plot, there is a strong positive, non-linear association between effect size (μ) and power. The relationship follows an S-shaped curve, starting at around 0.05 when μ = 0, increasing sharply between μ = 2 and μ = 4, and then leveling off as power approaches 1.0 for larger effect sizes, demonstrating that larger effects are more easily detected up to a certain point.
 
 Plot 2: Average Estimates
 ```{r}
@@ -147,9 +149,8 @@ simulation_results |>
     y = "Estimate",
     color = "Samples"
   )
-print(simulation_results)
 ```
-
+Comment: No, the sample average of μ̂ across tests where the null is rejected (yellow line) is not approximately equal to the true value of μ, particularly for smaller true values of μ. This is due to selection bias: when we only look at tests that rejected the null hypothesis, we are systematically selecting samples that showed larger effects than average, leading to overestimation of the true effect size, especially when μ is small.
 
 
 
